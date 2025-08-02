@@ -614,51 +614,54 @@ func TestToRateLimitFilterConfig(t *testing.T) {
 			var rl *ratev3.RateLimit
 			var err error
 
-			// This refactored block removes the redundant `if err == nil` checks
-			// and flattens the logic for better readability.
-			switch {
-			case tt.policy == nil || tt.policy.ExtensionRef == nil:
+			if tt.policy == nil || tt.policy.ExtensionRef == nil {
 				err = errors.New("extensionRef is required")
-			case tt.gatewayExtension == nil:
+			} else if tt.gatewayExtension == nil {
 				err = fmt.Errorf("failed to get referenced GatewayExtension")
-			case tt.gatewayExtension.Type != v1alpha1.GatewayExtensionTypeRateLimit:
+			} else if tt.gatewayExtension.Type != v1alpha1.GatewayExtensionTypeRateLimit {
 				err = fmt.Errorf("extension has type %s but %s was expected",
 					tt.gatewayExtension.Type, v1alpha1.GatewayExtensionTypeRateLimit)
-			case tt.gatewayExtension.RateLimit == nil:
-				err = fmt.Errorf("RateLimit configuration is missing in GatewayExtension")
-			default:
+			} else {
+				// Get the extension's spec
 				extension := tt.gatewayExtension.RateLimit
-				var clusterName string
-				if extension.GrpcService != nil && extension.GrpcService.BackendRef != nil {
-					clusterName = fmt.Sprintf("%s.%s.svc.cluster.local:%d",
-						extension.GrpcService.BackendRef.Name,
-						tt.gatewayExtension.Namespace,
-						*extension.GrpcService.BackendRef.Port)
+				if extension == nil {
+					err = fmt.Errorf("RateLimit configuration is missing in GatewayExtension")
 				} else {
-					err = fmt.Errorf("backend not provided in grpc service")
-				}
-
-				if err == nil {
+					// Create a timeout based on the timeout from extension
 					timeout := durationpb.New(extension.Timeout.Duration)
+
+					// Use the domain from the extension
 					domain := extension.Domain
-					rl = &ratev3.RateLimit{
-						Domain:          domain,
-						Timeout:         timeout,
-						FailureModeDeny: !extension.FailOpen,
-						RateLimitService: &envoyratelimitv3.RateLimitServiceConfig{
-							GrpcService: &envoycorev3.GrpcService{
-								TargetSpecifier: &envoycorev3.GrpcService_EnvoyGrpc_{
-									EnvoyGrpc: &envoycorev3.GrpcService_EnvoyGrpc{
-										ClusterName: clusterName,
+
+					// Construct cluster name from the backendRef
+					if extension.GrpcService != nil && extension.GrpcService.BackendRef != nil {
+						clusterName := fmt.Sprintf("%s.%s.svc.cluster.local:%d",
+							extension.GrpcService.BackendRef.Name,
+							tt.gatewayExtension.Namespace,
+							*extension.GrpcService.BackendRef.Port)
+
+						// Create a rate limit configuration
+						rl = &ratev3.RateLimit{
+							Domain:          domain,
+							Timeout:         timeout,
+							FailureModeDeny: !extension.FailOpen,
+							RateLimitService: &envoyratelimitv3.RateLimitServiceConfig{
+								GrpcService: &envoycorev3.GrpcService{
+									TargetSpecifier: &envoycorev3.GrpcService_EnvoyGrpc_{
+										EnvoyGrpc: &envoycorev3.GrpcService_EnvoyGrpc{
+											ClusterName: clusterName,
+										},
 									},
 								},
+								TransportApiVersion: envoycorev3.ApiVersion_V3,
 							},
-							TransportApiVersion: envoycorev3.ApiVersion_V3,
-						},
-						Stage:                   0,
-						EnableXRatelimitHeaders: ratev3.RateLimit_DRAFT_VERSION_03,
-						RequestType:             "both",
-						StatPrefix:              rateLimitStatPrefix,
+							Stage:                   0,
+							EnableXRatelimitHeaders: ratev3.RateLimit_DRAFT_VERSION_03,
+							RequestType:             "both",
+							StatPrefix:              rateLimitStatPrefix,
+						}
+					} else {
+						err = fmt.Errorf("backend not provided in grpc service")
 					}
 				}
 			}
