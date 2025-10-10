@@ -17,6 +17,20 @@ it will trigger the action to run.
 ## [Lint Helm Charts](./lint-helm.yaml)
 Perform linting on project [Helm Charts](../../install/helm/README.md).
 
+## [WIP Labeler](./wip-labeler.yaml)
+Automatically manages the "work in progress" label on pull requests based on their draft status:
+
+- **Adds "work in progress" label** when a PR is opened as a draft or converted to draft
+- **Removes "work in progress" label** when a draft PR is marked as ready for review
+
+This workflow helps maintain consistency in labeling and integrates with the existing labeler workflow that blocks merging of PRs with the "work in progress" label.
+
+### Triggers
+- `opened`: When a new PR is created
+- `reopened`: When a closed PR is reopened  
+- `ready_for_review`: When a draft PR is marked as ready for review
+- `converted_to_draft`: When a ready PR is converted back to draft
+
 ## Future Work
 It would be great to add support for issue comment directives. This would mean that commenting `/sig-ci` would signal CI to run, or `/skip-ci` would auto-succeed CI.
 
