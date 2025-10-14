@@ -72,6 +72,13 @@ func CreateTestInstallationForCluster(
 			WithClusterContext(clusterContext).
 			WithInstallContext(installContext),
 
+		// AssertionsT creates a new assertions provider for the specific test instance
+		AssertionsT: func(testT *testing.T) *assertions.Provider {
+			return assertions.NewProvider(testT).
+				WithClusterContext(clusterContext).
+				WithInstallContext(installContext)
+		},
+
 		// GeneratedFiles contains the unique location where files generated during the execution
 		// of tests against this installation will be stored
 		// By creating a unique location, per TestInstallation and per Cluster.Name we guarantee isolation
@@ -101,6 +108,10 @@ type TestInstallation struct {
 
 	// Assertions is the entity that creates assertions that can be executed by the Operator
 	Assertions *assertions.Provider
+
+	// AssertionsT is the entity that creates assertions with a specific test instance
+	// This should be used instead of Assertions to avoid "subtest may have called FailNow on a parent test" issues
+	AssertionsT func(t *testing.T) *assertions.Provider
 
 	// GeneratedFiles is the collection of directories and files that this test installation _may_ create
 	GeneratedFiles GeneratedFiles
