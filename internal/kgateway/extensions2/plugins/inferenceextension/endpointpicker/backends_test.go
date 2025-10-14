@@ -114,10 +114,11 @@ func TestProcessPoolBackendObjIR_SkipsOnErrors(t *testing.T) {
 			},
 		},
 	}
+
 	beIR := makeBackendIR(pool)
-	// Inject an error
 	irp := beIR.ObjIr.(*inferencePool)
-	irp.setErrors([]error{fmt.Errorf("failure injected")})
+	// Inject multiple errors
+	irp.setErrors([]error{fmt.Errorf("failure injected"), fmt.Errorf("another error")})
 
 	// Empty pod index
 	mock := krttest.NewMock(t, []any{})
@@ -130,7 +131,15 @@ func TestProcessPoolBackendObjIR_SkipsOnErrors(t *testing.T) {
 
 	cla := cluster.LoadAssignment
 	require.NotNil(t, cla, "LoadAssignment must still be set on error")
-	// We get exactly one empty LocalityLbEndpoints on errors
 	require.Len(t, cla.Endpoints, 1)
 	assert.Empty(t, cla.Endpoints[0].LbEndpoints)
+
+	// Assert error strings
+	expectedErrors := []string{"failure injected", "another error"}
+	snap := irp.snapshotErrors()
+	require.Len(t, snap, len(expectedErrors))
+	for i, err := range snap {
+		assert.Equal(t, expectedErrors[i], err.Error())
+	}
 }
+

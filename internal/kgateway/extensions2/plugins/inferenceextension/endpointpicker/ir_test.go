@@ -122,19 +122,28 @@ func TestEqualsAndEndpoints(t *testing.T) {
 }
 
 func TestErrorHandling(t *testing.T) {
-	// Create the pool IR
 	p := makePool()
 	assert.False(t, p.hasErrors())
 
-	// Set and snapshot
 	errList := []error{fmt.Errorf("e1"), fmt.Errorf("e2")}
 	p.setErrors(errList)
 	snap := p.snapshotErrors()
+
 	assert.Len(t, snap, 2)
 	assert.True(t, p.hasErrors())
 
-	// Modifying the snapshot does not affect internal
+	// Assert all error strings
+	expected := []string{"e1", "e2"}
+	for i, err := range snap {
+		assert.Equal(t, expected[i], err.Error())
+	}
+
+	// Modifying the snapshot does not affect internal errors
 	snap[0] = fmt.Errorf("changed")
 	snap2 := p.snapshotErrors()
 	assert.Equal(t, "e1", snap2[0].Error())
+	assert.Equal(t, "e2", snap2[1].Error())
 }
+
+
+
