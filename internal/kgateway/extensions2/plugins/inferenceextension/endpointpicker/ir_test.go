@@ -122,9 +122,11 @@ func TestEqualsAndEndpoints(t *testing.T) {
 }
 
 func TestErrorHandling(t *testing.T) {
+	// Create the pool IR
 	p := makePool()
 	assert.False(t, p.hasErrors())
 
+	// Set and snapshot
 	errList := []error{fmt.Errorf("e1"), fmt.Errorf("e2")}
 	p.setErrors(errList)
 	snap := p.snapshotErrors()

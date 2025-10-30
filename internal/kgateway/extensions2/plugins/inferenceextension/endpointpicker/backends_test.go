@@ -131,6 +131,8 @@ func TestProcessPoolBackendObjIR_SkipsOnErrors(t *testing.T) {
 
 	cla := cluster.LoadAssignment
 	require.NotNil(t, cla, "LoadAssignment must still be set on error")
+
+	// We get exactly one empty LocalityLbEndpoints on errors
 	require.Len(t, cla.Endpoints, 1)
 	assert.Empty(t, cla.Endpoints[0].LbEndpoints)
 
