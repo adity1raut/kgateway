@@ -1,0 +1,38 @@
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: AgentGatewayPolicy
+metadata:
+  name: traffic-combined-policy
+  namespace: default
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: test-route
+  traffic:
+    timeout:
+      request: 15s
+      idle: 2m
+    retries:
+      attempts: 2
+      perTryTimeout: 3s
+      retryOn:
+      - "5xx"
+      backoff:
+        baseInterval: 500ms
+        maxInterval: 5s
+    cors:
+      allowOrigins:
+      - exact: "https://example.com"
+      allowMethods:
+      - GET
+      - POST
+      maxAge: 3600s
+    headerManipulation:
+      requestHeadersToAdd:
+      - name: "X-API-Version"
+        value: "v1"
+        append: false
+      responseHeadersToAdd:
+      - name: "X-Frame-Options"
+        value: "DENY"
+        append: false

@@ -1,0 +1,21 @@
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: AgentGatewayPolicy
+metadata:
+  name: traffic-retries-policy
+  namespace: default
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: test-route
+  traffic:
+    retries:
+      attempts: 3
+      perTryTimeout: 5s
+      retryOn:
+      - "5xx"
+      - "gateway-error"
+      - "connect-failure"
+      backoff:
+        baseInterval: 1s
+        maxInterval: 10s

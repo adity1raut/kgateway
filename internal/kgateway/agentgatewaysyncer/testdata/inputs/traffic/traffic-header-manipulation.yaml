@@ -1,0 +1,30 @@
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: AgentGatewayPolicy
+metadata:
+  name: traffic-header-manipulation-policy
+  namespace: default
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: test-route
+  traffic:
+    headerManipulation:
+      requestHeadersToAdd:
+      - name: "X-Custom-Header"
+        value: "custom-value"
+        append: false
+      - name: "X-Request-ID"
+        value: "%REQ_ID%"
+        append: false
+      requestHeadersToRemove:
+      - "X-Internal-Header"
+      responseHeadersToAdd:
+      - name: "X-Response-Header"
+        value: "response-value"
+        append: false
+      - name: "X-Server"
+        value: "kgateway"
+        append: false
+      responseHeadersToRemove:
+      - "X-Powered-By"
