@@ -1,5 +1,5 @@
 apiVersion: gateway.kgateway.dev/v1alpha1
-kind: AgentGatewayPolicy
+kind: AgentgatewayPolicy
 metadata:
   name: traffic-header-manipulation-policy
   namespace: default
